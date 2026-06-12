@@ -9,6 +9,7 @@ const path   = require('path')
 const { exec } = require('child_process')
 
 const PORT = 3000
+const BASE = '/checklist-gas-gerencial'
 const DIST = path.join(__dirname, 'dist')
 
 const MIME = {
@@ -25,7 +26,17 @@ const MIME = {
 
 const server = http.createServer((req, res) => {
   let urlPath = req.url.split('?')[0]
-  if (urlPath === '/') urlPath = '/index.html'
+
+  // Redireciona raiz para o subpath do app
+  if (urlPath === '/') {
+    res.writeHead(302, { Location: BASE + '/' })
+    res.end()
+    return
+  }
+
+  // Remove o prefixo base para mapear para o dist/
+  if (urlPath.startsWith(BASE)) urlPath = urlPath.slice(BASE.length)
+  if (!urlPath || urlPath === '/') urlPath = '/index.html'
 
   const filePath = path.join(DIST, urlPath)
 
@@ -51,7 +62,7 @@ const server = http.createServer((req, res) => {
 })
 
 server.listen(PORT, '127.0.0.1', () => {
-  const url = `http://localhost:${PORT}`
+  const url = `http://localhost:${PORT}${BASE}/`
   console.log('╔════════════════════════════════════════╗')
   console.log('║   Gás Gerencial — servidor iniciado    ║')
   console.log('╚════════════════════════════════════════╝')
