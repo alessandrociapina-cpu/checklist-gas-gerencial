@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
 import { db } from '../lib/db'
+import { calcConformidadeChecklist } from '../lib/importService'
 
-export default function ChecklistsPage({ onDetalhe }) {
+export default function ChecklistsPage({ onDetalhe, onImprimir }) {
   const [checklists, setChecklists] = useState(null)
   const [busca, setBusca] = useState('')
   const [fiscal, setFiscal] = useState('')
@@ -88,18 +89,15 @@ export default function ChecklistsPage({ onDetalhe }) {
                   <th className="px-4 py-3 font-medium">OS / Endereço</th>
                   <th className="px-4 py-3 font-medium hidden sm:table-cell">Fiscal</th>
                   <th className="px-4 py-3 font-medium hidden md:table-cell">Município</th>
-                  <th className="px-4 py-3 font-medium text-right">Conformidade</th>
+                  <th className="px-4 py-3 font-medium text-center">Conformidade</th>
+                  <th className="px-4 py-3 font-medium text-center">Ações</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
                 {filtrados.map(c => {
-                  const conformidade = calcConformidade(c)
+                  const conformidade = calcConformidadeChecklist(c)
                   return (
-                    <tr
-                      key={c.id}
-                      onClick={() => onDetalhe(c.id)}
-                      className="hover:bg-blue-50 cursor-pointer transition-colors"
-                    >
+                    <tr key={c.id} className="hover:bg-blue-50 transition-colors">
                       <td className="px-4 py-3 text-gray-500 whitespace-nowrap">
                         {c.data ? formatarData(c.data) : '—'}
                       </td>
@@ -111,7 +109,7 @@ export default function ChecklistsPage({ onDetalhe }) {
                       </td>
                       <td className="px-4 py-3 text-gray-600 hidden sm:table-cell">{c.fiscal || '—'}</td>
                       <td className="px-4 py-3 text-gray-600 hidden md:table-cell">{c.municipio || '—'}</td>
-                      <td className="px-4 py-3 text-right">
+                      <td className="px-4 py-3 text-center">
                         <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold
                           ${conformidade >= 80 ? 'bg-green-100 text-green-700'
                             : conformidade >= 50 ? 'bg-yellow-100 text-yellow-700'
@@ -119,6 +117,34 @@ export default function ChecklistsPage({ onDetalhe }) {
                             : 'bg-gray-100 text-gray-500'}`}>
                           {conformidade > 0 ? `${conformidade}%` : '—'}
                         </span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center justify-center gap-1">
+                          {/* Ver relatório */}
+                          <button
+                            onClick={() => onDetalhe(c.id)}
+                            className="p-1.5 rounded-lg text-brand-600 hover:bg-brand-50"
+                            title="Ver relatório completo"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                                d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                            </svg>
+                          </button>
+                          {/* Imprimir / PDF */}
+                          <button
+                            onClick={() => onImprimir(c.id)}
+                            className="p-1.5 rounded-lg text-gray-500 hover:bg-gray-100"
+                            title="Imprimir / Salvar PDF"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                                d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                            </svg>
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   )
@@ -130,17 +156,6 @@ export default function ChecklistsPage({ onDetalhe }) {
       )}
     </div>
   )
-}
-
-function calcConformidade(c) {
-  let ok = 0, total = 0
-  for (const f of ['frente1', 'frente2', 'frente3', 'frente4']) {
-    for (const item of c.frentes?.[f] ?? []) {
-      total++
-      if (item.ok === true || item.ok === 'ok') ok++
-    }
-  }
-  return total > 0 ? Math.round((ok / total) * 100) : 0
 }
 
 function formatarData(data) {

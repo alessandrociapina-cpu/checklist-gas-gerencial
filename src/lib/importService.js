@@ -35,20 +35,25 @@ export async function processarArquivos(arquivos) {
   return resultados
 }
 
+// Chaves reais do app checklist-gas: f1, f2, f3, f4
+export const FRENTES = [
+  { key: 'f1', label: 'Frente 1 — Análise Prévia' },
+  { key: 'f2', label: 'Frente 2 — Concessionária de Gás' },
+  { key: 'f3', label: 'Frente 3 — Investigação de Campo' },
+  { key: 'f4', label: 'Frente 4 — Execução e Encerramento' },
+]
+
 export function calcularConformidade(checklists) {
-  const frentes = ['frente1', 'frente2', 'frente3', 'frente4']
-  const labels = ['Frente 1', 'Frente 2', 'Frente 3', 'Frente 4']
-  return frentes.map((f, i) => {
+  return FRENTES.map(({ key, label }) => {
     let ok = 0, total = 0
     for (const c of checklists) {
-      const itens = c.frentes?.[f] ?? []
-      for (const item of itens) {
+      for (const item of c.frentes?.[key] ?? []) {
         total++
-        if (item.ok === true || item.ok === 'ok') ok++
+        if (item.ok === true) ok++
       }
     }
     const pct = total > 0 ? Math.round((ok / total) * 100) : 0
-    return { frente: labels[i], conformidade: pct, ok, total }
+    return { frente: label, conformidade: pct, ok, total }
   })
 }
 
@@ -72,4 +77,15 @@ export function agruparPorFiscal(checklists) {
   return Object.entries(map)
     .sort(([, a], [, b]) => b - a)
     .map(([fiscal, quantidade]) => ({ fiscal, quantidade }))
+}
+
+export function calcConformidadeChecklist(c) {
+  let ok = 0, total = 0
+  for (const { key } of FRENTES) {
+    for (const item of c.frentes?.[key] ?? []) {
+      total++
+      if (item.ok === true) ok++
+    }
+  }
+  return total > 0 ? Math.round((ok / total) * 100) : 0
 }
