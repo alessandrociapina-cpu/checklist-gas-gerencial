@@ -13,29 +13,223 @@
   .scrollbar-thin::-webkit-scrollbar-thumb { @apply bg-gray-300 rounded; }
 }
 
-/* ── Impressão / PDF ─────────────────────────────────────────── */
+/* ═══════════════════════════════════════════════════════
+   RELATÓRIO — cores do app de campo
+   --azul: #0d2b45  --laranja: #f58220  --verde: #1e8e3e
+   --vermelho: #c5221f
+═══════════════════════════════════════════════════════ */
+
+.rel-page {
+  max-width: 900px;
+  margin: 0 auto;
+  background: #fff;
+  border: 1px solid #d8dee6;
+  border-radius: 10px;
+  overflow: hidden;
+  font-size: 0.85rem;
+  color: #1f2937;
+}
+
+/* Cabeçalho */
+.rel-header {
+  background: #0d2b45;
+  color: white;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 20px;
+}
+.rel-header h1 {
+  font-size: 1rem;
+  font-weight: 700;
+  margin: 0 0 4px;
+  letter-spacing: 0.01em;
+}
+.rel-header p  { margin: 0; font-size: 0.8rem; opacity: .85; }
+.rel-header-info { flex: 1; }
+
+/* Cards de resumo */
+.rel-resumo {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid #d8dee6;
+}
+.rel-card {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 8px;
+  border-right: 1px solid #d8dee6;
+  border-bottom: 2px solid;
+}
+.rel-card:last-child { border-right: none; }
+.rel-card-valor { font-size: 1.4rem; font-weight: 700; line-height: 1; }
+.rel-card-label { font-size: 0.7rem; font-weight: 500; margin-top: 3px; text-transform: uppercase; letter-spacing: .04em; }
+
+/* Seções */
+.rel-secao { border-bottom: 1px solid #d8dee6; }
+.rel-secao:last-child { border-bottom: none; }
+.rel-secao-titulo {
+  background: #1c4a74;
+  color: white;
+  padding: 8px 16px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.rel-secao-badge {
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 2px 10px;
+  border-radius: 20px;
+  letter-spacing: 0;
+  text-transform: none;
+}
+.rel-secao-corpo { padding: 12px 16px; }
+
+/* Barra de progresso */
+.rel-barra-bg {
+  height: 6px;
+  background: #e5e7eb;
+  border-radius: 3px;
+  margin-bottom: 12px;
+  overflow: hidden;
+}
+.rel-barra-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width .3s;
+}
+
+/* Tabelas */
+.rel-tabela {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8rem;
+}
+.rel-tabela th {
+  background: #f1f5f9;
+  padding: 6px 10px;
+  text-align: left;
+  font-weight: 600;
+  color: #374151;
+  border-bottom: 1px solid #d8dee6;
+}
+.rel-tabela td {
+  padding: 7px 10px;
+  border-bottom: 1px solid #f1f5f9;
+  vertical-align: top;
+}
+.rel-td-label {
+  color: #6b7280;
+  font-weight: 500;
+  white-space: nowrap;
+  width: 220px;
+}
+.rel-td-valor { color: #111827; font-weight: 500; }
+
+/* Itens das frentes */
+.rel-ok  td { background: #f0fdf4; }
+.rel-nok td { background: #fef2f2; }
+.rel-badge-ok  { background: #d1fae5; color: #065f46; padding: 2px 8px; border-radius: 12px; font-size: .75rem; font-weight: 700; white-space: nowrap; }
+.rel-badge-nok { background: #fee2e2; color: #991b1b; padding: 2px 8px; border-radius: 12px; font-size: .75rem; font-weight: 700; white-space: nowrap; }
+.rel-justificativa { color: #b45309; font-weight: 500; display: block; }
+
+/* Fotos */
+.rel-fotos-row td { background: #fafafa !important; padding: 8px 10px !important; }
+.rel-fotos-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.rel-foto-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+.rel-foto-img {
+  width: 140px;
+  height: 105px;
+  object-fit: cover;
+  border-radius: 6px;
+  border: 1px solid #d8dee6;
+}
+.rel-foto-rotulo {
+  font-size: 0.7rem;
+  color: #6b7280;
+}
+
+/* Assinaturas */
+.rel-assinaturas {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.rel-assinatura-bloco {
+  flex: 1;
+  min-width: 160px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+.rel-assinatura-img-wrap {
+  height: 70px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+.rel-assinatura-img    { max-height: 70px; max-width: 160px; object-fit: contain; }
+.rel-assinatura-vazio  { color: #9ca3af; font-size: 0.75rem; font-style: italic; }
+.rel-assinatura-linha  { width: 100%; height: 1px; background: #374151; margin-top: 4px; }
+.rel-assinatura-nome   { font-size: 0.75rem; font-weight: 600; text-align: center; color: #1f2937; margin: 0; }
+
+/* Rodapé */
+.rel-rodape {
+  text-align: center;
+  font-size: 0.7rem;
+  color: #9ca3af;
+  padding: 10px;
+  border-top: 1px solid #d8dee6;
+}
+
+/* ═══════════════════════════════════════════════════════
+   IMPRESSÃO / PDF
+═══════════════════════════════════════════════════════ */
 .print-only { display: none; }
 
 @media print {
   /* Oculta shell do app */
   header, nav, .no-print { display: none !important; }
-
-  /* Remove padding da área principal */
   main { padding: 0 !important; margin: 0 !important; }
   body { background: white !important; }
 
-  /* Cabeçalho de impressão */
-  .print-only { display: block !important; }
-  .print-header { margin-bottom: 1rem; border-bottom: 2px solid #1e3a5f; padding-bottom: 0.5rem; }
-  .print-header h1 { font-size: 1.25rem; font-weight: bold; color: #1e3a5f; }
-  .print-header p  { font-size: 0.875rem; color: #666; }
+  .rel-page {
+    max-width: 100%;
+    border: none;
+    border-radius: 0;
+  }
 
-  /* Garante que seções não quebrem no meio */
-  .print-area > * { break-inside: avoid; }
+  /* Cada seção em nova página se necessário */
+  .rel-secao { break-inside: avoid; }
 
-  /* Ajusta cores para impressão */
-  .bg-green-50  { background-color: #f0fdf4 !important; }
-  .bg-red-50    { background-color: #fef2f2 !important; }
-  .bg-gray-50   { background-color: #f9fafb !important; }
-  .shadow-sm    { box-shadow: none !important; }
+  /* Fotos não quebram */
+  .rel-fotos-row { break-inside: avoid; }
+
+  /* Remove sombras */
+  .shadow-sm, .shadow { box-shadow: none !important; }
+
+  /* Mantém cores de fundo na impressão */
+  .rel-header           { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .rel-secao-titulo     { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .rel-ok td, .rel-nok td { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .rel-card             { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .rel-tabela th        { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 }

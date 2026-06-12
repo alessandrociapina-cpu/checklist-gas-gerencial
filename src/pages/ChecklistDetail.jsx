@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { db } from '../lib/db'
 import { FRENTES } from '../lib/importService'
+import { DEFINICOES_FRENTES, LABELS_GERAL, fmtData, fotosDoItem } from '../lib/reportData'
 
 export default function ChecklistDetail({ id, onVoltar, autoPrint = false }) {
   const [checklist, setChecklist] = useState(null)
@@ -13,7 +14,7 @@ export default function ChecklistDetail({ id, onVoltar, autoPrint = false }) {
 
   useEffect(() => {
     if (autoPrint && checklist) {
-      const t = setTimeout(() => window.print(), 400)
+      const t = setTimeout(() => window.print(), 500)
       return () => clearTimeout(t)
     }
   }, [autoPrint, checklist])
@@ -22,31 +23,32 @@ export default function ChecklistDetail({ id, onVoltar, autoPrint = false }) {
 
   const g = checklist.geral ?? {}
 
+  // totais gerais
+  let totalOk = 0, totalItens = 0
+  FRENTES.forEach(({ key }) => {
+    const itens = checklist.frentes?.[key] ?? []
+    totalItens += itens.length
+    totalOk    += itens.filter(i => i.ok === true).length
+  })
+  const pctGeral = totalItens > 0 ? Math.round((totalOk / totalItens) * 100) : 0
+  const totalFotos = fotos.length
+
   return (
-    <div className="max-w-3xl space-y-5 print-area">
-      {/* Cabeçalho — oculto na impressão */}
-      <div className="flex items-center gap-3 no-print">
-        <button
-          onClick={onVoltar}
-          className="p-2 rounded-lg hover:bg-gray-100 text-gray-500"
-          title="Voltar"
-        >
+    <div style={{ fontFamily: "system-ui, -apple-system, 'Segoe UI', sans-serif" }}>
+
+      {/* ── Toolbar (só em tela) ───────────────────────────── */}
+      <div className="no-print flex items-center gap-3 mb-4">
+        <button onClick={onVoltar}
+          className="p-2 rounded-lg hover:bg-gray-100 text-gray-500" title="Voltar">
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
           </svg>
         </button>
-        <div className="flex-1">
-          <h1 className="text-xl font-bold text-brand-900">
-            {g.os ? `OS ${g.os}` : 'Checklist'}
-          </h1>
-          <p className="text-sm text-gray-500">{g.endereco}</p>
-        </div>
-        {/* Botão imprimir */}
-        <button
-          onClick={() => window.print()}
-          className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-sm font-medium"
-          title="Imprimir / Salvar como PDF"
-        >
+        <span className="font-semibold text-brand-900 flex-1 truncate">
+          {g.os ? `OS ${g.os}` : 'Checklist'} — {g.endereco}
+        </span>
+        <button onClick={() => window.print()}
+          className="flex items-center gap-2 px-4 py-2 bg-gray-800 hover:bg-gray-900 text-white rounded-lg text-sm font-medium">
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
               d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
@@ -55,141 +57,245 @@ export default function ChecklistDetail({ id, onVoltar, autoPrint = false }) {
         </button>
       </div>
 
-      {/* Cabeçalho visível apenas na impressão */}
-      <div className="print-only print-header">
-        <h1>{g.os ? `Checklist — OS ${g.os}` : 'Checklist de Fiscalização'}</h1>
-        <p>{g.endereco}</p>
-      </div>
+      {/* ══════════════════════════════════════════════════════
+          RELATÓRIO — igual ao emitido em campo
+      ══════════════════════════════════════════════════════ */}
+      <div className="rel-page">
 
-      {/* Informações gerais */}
-      <Secao titulo="Informações Gerais">
-        <Grade>
-          <Campo label="Fiscal" valor={g.responsavel} />
-          <Campo label="Equipe" valor={g.equipe} />
-          <Campo label="Data" valor={formatarData(g.data)} />
-          <Campo label="Município" valor={g.municipio === 'outro' ? g.municipioOutro : g.municipio} />
-          <Campo label="Serviço" valor={g.descricaoServico} span />
-          <Campo label="Contrato" valor={g.contrato} />
-          <Campo label="Protocolo Gás" valor={g.protocoloGas} />
-          <Campo label="Técnico Gás" valor={g.tecnicoGas} />
-        </Grade>
-      </Secao>
+        {/* Cabeçalho */}
+        <div className="rel-header">
+          <div className="rel-header-logo">
+            <img src={`${import.meta.env.BASE_URL}icons/icon-96.png`} alt=""
+              style={{ width: 52, height: 52, borderRadius: 10 }} />
+          </div>
+          <div className="rel-header-info">
+            <h1>Checklist de Fiscalização de Interferência</h1>
+            <p>
+              {g.os && <><strong>OS:</strong> {g.os}&ensp;</>}
+              {g.municipio && <><strong>Município:</strong> {g.municipio === 'outro' ? g.municipioOutro : g.municipio}&ensp;</>}
+              <strong>Data:</strong> {fmtData(g.data)}
+              {g.equipe && <>&ensp;<strong>Equipe:</strong> {g.equipe}</>}
+            </p>
+          </div>
+        </div>
 
-      {/* Frentes */}
-      {FRENTES.map(({ key, label }) => {
-        const itens = checklist.frentes?.[key] ?? []
-        if (!itens.length) return null
-        const ok    = itens.filter(i => i.ok === true).length
-        const total = itens.length
-        const pct   = Math.round((ok / total) * 100)
-        return (
-          <Secao key={key} titulo={label} badge={`${ok}/${total} — ${pct}%`} cor={pct >= 80 ? 'green' : pct >= 50 ? 'yellow' : 'red'}>
-            <div className="space-y-2">
-              {itens.map((item, i) => {
-                const itemOk = item.ok === true
+        {/* Cards de resumo */}
+        <div className="rel-resumo">
+          <Card cor={pctGeral >= 80 ? 'verde' : pctGeral >= 50 ? 'laranja' : 'vermelho'}
+            valor={`${pctGeral}%`} label="Conformidade" />
+          <Card cor="azul"    valor={totalOk}              label="Itens OK" />
+          <Card cor="laranja" valor={totalItens - totalOk} label="Pendências" />
+          <Card cor="neutro"  valor={totalFotos}           label="Fotos" />
+          {g.criticidade && <Card cor="neutro" valor={g.criticidade} label="Criticidade" />}
+        </div>
+
+        {/* Informações gerais */}
+        <Secao titulo="Informações Gerais">
+          <table className="rel-tabela">
+            <tbody>
+              {LABELS_GERAL.map(({ key, label, transform }) => {
+                const val = g[key]
+                if (!val && val !== 0) return null
+                const display = transform ? transform(val, g) : val
+                if (!display) return null
                 return (
-                  <div key={i} className={`rounded-lg px-3 py-2 flex items-start gap-3 ${itemOk ? 'bg-green-50' : 'bg-red-50'}`}>
-                    <span className={`mt-0.5 flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold
-                      ${itemOk ? 'bg-green-200 text-green-700' : 'bg-red-200 text-red-700'}`}>
-                      {itemOk ? '✓' : '✗'}
-                    </span>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-800">{item.titulo ?? item.label ?? `Item ${i + 1}`}</p>
-                      {item.justificativa && (
-                        <p className="text-xs text-orange-700 mt-0.5"><strong>Justificativa:</strong> {item.justificativa}</p>
-                      )}
-                      {item.responsavel && (
-                        <p className="text-xs text-gray-500 mt-0.5"><strong>Responsável:</strong> {item.responsavel}</p>
-                      )}
-                      {item.observacoes && (
-                        <p className="text-xs text-gray-500 mt-0.5"><strong>Obs:</strong> {item.observacoes}</p>
-                      )}
+                  <tr key={key}>
+                    <td className="rel-td-label">{label}</td>
+                    <td className="rel-td-valor">{display}</td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+        </Secao>
+
+        {/* Frentes */}
+        {FRENTES.map(({ key, label }) => {
+          const itens = checklist.frentes?.[key] ?? []
+          if (!itens.length) return null
+          const ok  = itens.filter(i => i.ok === true).length
+          const pct = Math.round((ok / itens.length) * 100)
+          return (
+            <Secao key={key} titulo={label}
+              badge={`${ok}/${itens.length} — ${pct}%`}
+              corBadge={pct >= 80 ? 'verde' : pct >= 50 ? 'laranja' : 'vermelho'}>
+
+              {/* Barra de progresso */}
+              <div className="rel-barra-bg">
+                <div className="rel-barra-fill"
+                  style={{ width: `${pct}%`, background: pct >= 80 ? '#1e8e3e' : pct >= 50 ? '#f58220' : '#c5221f' }} />
+              </div>
+
+              <table className="rel-tabela rel-tabela-itens">
+                <thead>
+                  <tr>
+                    <th style={{ width: 32 }}>#</th>
+                    <th>Descrição</th>
+                    <th style={{ width: 64, textAlign: 'center' }}>Status</th>
+                    <th style={{ width: 130 }}>Responsável</th>
+                    <th>Observações / Justificativa</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {itens.map((item, i) => {
+                    const titulo = item.texto ?? DEFINICOES_FRENTES[key]?.[i] ?? `Item ${i + 1}`
+                    const itemOk = item.ok === true
+                    const fts    = fotosDoItem(fotos, key, i)
+                    return (
+                      <>
+                        <tr key={i} className={itemOk ? 'rel-ok' : 'rel-nok'}>
+                          <td style={{ textAlign: 'center', color: '#6b7280' }}>{i + 1}</td>
+                          <td style={{ fontWeight: 500 }}>{titulo}</td>
+                          <td style={{ textAlign: 'center' }}>
+                            <span className={itemOk ? 'rel-badge-ok' : 'rel-badge-nok'}>
+                              {itemOk ? '✓ OK' : '✗ N/C'}
+                            </span>
+                          </td>
+                          <td style={{ fontSize: '0.8rem', color: '#374151' }}>{item.responsavel || '—'}</td>
+                          <td style={{ fontSize: '0.8rem' }}>
+                            {!itemOk && item.justificativa && (
+                              <span className="rel-justificativa">⚠ {item.justificativa}</span>
+                            )}
+                            {item.observacoes && <span style={{ color: '#4b5563' }}>{item.observacoes}</span>}
+                            {!item.justificativa && !item.observacoes && '—'}
+                          </td>
+                        </tr>
+                        {/* Fotos do item */}
+                        {fts.length > 0 && (
+                          <tr key={`${i}-fotos`} className="rel-fotos-row">
+                            <td />
+                            <td colSpan={4}>
+                              <div className="rel-fotos-wrap">
+                                {fts.map((f, fi) => (
+                                  <div key={fi} className="rel-foto-item">
+                                    <img src={f.dataUrl} alt={`Foto ${fi + 1}`} className="rel-foto-img" />
+                                    <span className="rel-foto-rotulo">Foto {fi + 1}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            </td>
+                          </tr>
+                        )}
+                      </>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </Secao>
+          )
+        })}
+
+        {/* Fotos não associadas a itens (gerais do checklist) */}
+        {(() => {
+          const fotasGerais = fotos.filter(f => !f.itemKey || f.itemKey === '')
+          if (!fotasGerais.length) return null
+          return (
+            <Secao titulo="Registro Fotográfico">
+              <div className="rel-fotos-wrap">
+                {fotasGerais.map((f, i) => (
+                  <div key={i} className="rel-foto-item">
+                    <img src={f.dataUrl} alt={`Foto ${i + 1}`} className="rel-foto-img" />
+                    <span className="rel-foto-rotulo">Foto {i + 1}</span>
+                  </div>
+                ))}
+              </div>
+            </Secao>
+          )
+        })()}
+
+        {/* Cadastro */}
+        {checklist.cadastro?.necessita === 'sim' && (
+          <Secao titulo="Atualização Cadastral">
+            <table className="rel-tabela">
+              <thead>
+                <tr>
+                  <th>Rede</th>
+                  <th>Posição</th>
+                  <th>Divergência</th>
+                  <th>Descrição</th>
+                </tr>
+              </thead>
+              <tbody>
+                {(checklist.cadastro.registros ?? []).map((r, i) => (
+                  <tr key={i}>
+                    <td>{r.rede}</td>
+                    <td>{r.posicao}</td>
+                    <td>{Array.isArray(r.divergencias) ? r.divergencias.join(', ') : r.divergencias}</td>
+                    <td>{r.descricao || '—'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </Secao>
+        )}
+
+        {/* Assinaturas */}
+        {checklist.assinaturas && Object.values(checklist.assinaturas).some(a => a?.nome || a?.img) && (
+          <Secao titulo="Assinaturas">
+            <div className="rel-assinaturas">
+              {Object.entries(checklist.assinaturas).map(([key, ass]) => {
+                if (!ass?.nome && !ass?.img) return null
+                return (
+                  <div key={key} className="rel-assinatura-bloco">
+                    <div className="rel-assinatura-img-wrap">
+                      {ass.img
+                        ? <img src={ass.img} alt={ass.nome} className="rel-assinatura-img" />
+                        : <span className="rel-assinatura-vazio">Pendente</span>}
                     </div>
+                    <div className="rel-assinatura-linha" />
+                    <p className="rel-assinatura-nome">{ass.nome || '—'}</p>
                   </div>
                 )
               })}
             </div>
           </Secao>
-        )
-      })}
+        )}
 
-      {/* Cadastro */}
-      {checklist.cadastro?.necessita === 'sim' && (
-        <Secao titulo="Atualização Cadastral">
-          <p className="text-sm text-gray-600 mb-3">
-            {checklist.cadastro.registros?.length ?? 0} registro(s) de divergência
-          </p>
-          {checklist.cadastro.registros?.map((r, i) => (
-            <div key={i} className="border border-gray-200 rounded-lg p-3 mb-2 text-sm">
-              <p className="font-medium">Rede: {r.rede}</p>
-              <p className="text-gray-600">Posição: {r.posicao} | Divergência: {r.divergencias}</p>
-              {r.descricao && <p className="text-gray-500 text-xs mt-1">{r.descricao}</p>}
-            </div>
-          ))}
-        </Secao>
-      )}
+        {/* Rodapé */}
+        <div className="rel-rodape">
+          Gerado em {new Date().toLocaleString('pt-BR')} · Checklist Gás — Sistema Gerencial
+        </div>
 
-      {/* Assinaturas */}
-      {checklist.assinaturas && Object.values(checklist.assinaturas).some(a => a?.nome || a?.img) && (
-        <Secao titulo="Assinaturas">
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {Object.entries(checklist.assinaturas).map(([key, ass]) => {
-              if (!ass?.nome && !ass?.img) return null
-              return (
-                <div key={key} className="border border-gray-200 rounded-lg p-2 text-center">
-                  {ass.img && (
-                    <img src={ass.img} alt={ass.nome} className="max-h-16 mx-auto mb-1 object-contain" />
-                  )}
-                  <p className="text-xs text-gray-600 font-medium">{ass.nome || '—'}</p>
-                </div>
-              )
-            })}
-          </div>
-        </Secao>
-      )}
+      </div>{/* /rel-page */}
     </div>
   )
 }
 
-function Secao({ titulo, children, badge, cor }) {
-  const corMap = {
-    green:  'bg-green-100 text-green-700',
-    yellow: 'bg-yellow-100 text-yellow-700',
-    red:    'bg-red-100 text-red-700',
-  }
+/* ── Subcomponentes ────────────────────────────────────── */
+
+function Secao({ titulo, children, badge, corBadge }) {
+  const corMap = { verde: '#d1fae5//#065f46', laranja: '#ffedd5//#9a3412', vermelho: '#fee2e2//#991b1b' }
+  const [bg, fg] = corBadge ? corMap[corBadge]?.split('//') ?? ['#e5e7eb', '#374151'] : []
   return (
-    <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-      <div className="flex items-center justify-between px-4 py-3 bg-gray-50 border-b border-gray-200">
-        <h2 className="font-semibold text-gray-700 text-sm">{titulo}</h2>
+    <div className="rel-secao">
+      <div className="rel-secao-titulo">
+        <span>{titulo}</span>
         {badge && (
-          <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${corMap[cor] ?? 'bg-gray-100 text-gray-600'}`}>
+          <span className="rel-secao-badge" style={{ background: bg, color: fg }}>
             {badge}
           </span>
         )}
       </div>
-      <div className="p-4">{children}</div>
+      <div className="rel-secao-corpo">{children}</div>
     </div>
   )
 }
 
-function Grade({ children }) {
-  return <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-6 gap-y-3">{children}</div>
-}
-
-function Campo({ label, valor, span }) {
-  if (!valor) return null
+function Card({ valor, label, cor }) {
+  const esquemas = {
+    verde:    { bg: '#d1fae5', fg: '#065f46', borda: '#6ee7b7' },
+    laranja:  { bg: '#ffedd5', fg: '#9a3412', borda: '#fdba74' },
+    vermelho: { bg: '#fee2e2', fg: '#991b1b', borda: '#fca5a5' },
+    azul:     { bg: '#dbeafe', fg: '#1e40af', borda: '#93c5fd' },
+    neutro:   { bg: '#f3f4f6', fg: '#374151', borda: '#d1d5db' },
+  }
+  const { bg, fg, borda } = esquemas[cor] ?? esquemas.neutro
   return (
-    <div className={span ? 'col-span-2 sm:col-span-3' : ''}>
-      <p className="text-xs text-gray-400 uppercase tracking-wide">{label}</p>
-      <p className="text-sm font-medium text-gray-700 mt-0.5">{valor}</p>
+    <div className="rel-card" style={{ background: bg, borderColor: borda }}>
+      <span className="rel-card-valor" style={{ color: fg }}>{valor}</span>
+      <span className="rel-card-label" style={{ color: fg }}>{label}</span>
     </div>
   )
-}
-
-function formatarData(data) {
-  if (!data) return '—'
-  try { const [a, m, d] = data.split('-'); return `${d}/${m}/${a}` }
-  catch { return data }
 }
 
 function Spinner() {
