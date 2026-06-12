@@ -10,14 +10,14 @@ export function usePWA() {
     updateServiceWorker,
   } = useRegisterSW({
     onRegistered(r) {
-      // Verifica atualizações a cada hora
       r && setInterval(() => r.update(), 60 * 60 * 1000)
     },
   })
 
   useEffect(() => {
     const handler = e => {
-      e.preventDefault()
+      // Não chama e.preventDefault() — deixa o Edge/Chrome mostrar
+      // o botão nativo de instalação na barra de endereços
       setInstallPrompt(e)
     }
     window.addEventListener('beforeinstallprompt', handler)
@@ -25,7 +25,6 @@ export function usePWA() {
     const installed = () => setIsInstalled(true)
     window.addEventListener('appinstalled', installed)
 
-    // Detecta se já está instalado
     if (window.matchMedia('(display-mode: standalone)').matches) {
       setIsInstalled(true)
     }

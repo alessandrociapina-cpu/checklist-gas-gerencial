@@ -36,7 +36,7 @@ export default function App() {
         onInstalar={installPrompt && !isInstalled ? instalar : null}
         isInstalled={isInstalled}
       >
-        {pagina === 'dashboard'  && <Dashboard key={refreshKey} onNavegar={navegar} />}
+        {pagina === 'dashboard'  && <Dashboard key={refreshKey} onNavegar={navegar} onInstalar={installPrompt && !isInstalled ? instalar : null} isInstalled={isInstalled} />}
         {pagina === 'importar'   && <ImportPage onImportado={onImportado} />}
         {pagina === 'relatorios' && <RelatoriosPage key={refreshKey} />}
         {pagina === 'checklists' && <ChecklistsPage key={refreshKey} onDetalhe={id => navegar('detalhe', id)} />}

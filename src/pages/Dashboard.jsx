@@ -5,7 +5,7 @@ import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
 } from 'recharts'
 
-export default function Dashboard({ onNavegar }) {
+export default function Dashboard({ onNavegar, onInstalar, isInstalled }) {
   const [dados, setDados] = useState(null)
 
   useEffect(() => {
@@ -21,6 +21,23 @@ export default function Dashboard({ onNavegar }) {
   return (
     <div className="space-y-6 max-w-5xl">
       <h1 className="text-2xl font-bold text-brand-900">Dashboard</h1>
+
+      {/* Banner de instalação */}
+      {onInstalar && !isInstalled && (
+        <div className="bg-brand-900 text-white rounded-xl p-4 flex items-center gap-4">
+          <img src={`${import.meta.env.BASE_URL}icons/icon-96.png`} alt="" className="w-12 h-12 rounded-xl flex-shrink-0" />
+          <div className="flex-1 min-w-0">
+            <p className="font-semibold">Instalar como aplicativo</p>
+            <p className="text-sm text-blue-200">Acesso rápido, funciona offline após instalação</p>
+          </div>
+          <button
+            onClick={onInstalar}
+            className="flex-shrink-0 bg-white text-brand-900 font-semibold text-sm px-4 py-2 rounded-lg hover:bg-blue-50"
+          >
+            Instalar
+          </button>
+        </div>
+      )}
 
       {/* Cards de resumo */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
