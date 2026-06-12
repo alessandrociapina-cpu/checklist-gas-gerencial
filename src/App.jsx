@@ -1,5 +1,7 @@
 import { useState } from 'react'
 import Layout from './components/Layout'
+import InstallBanner from './components/InstallBanner'
+import { usePWA } from './hooks/usePWA'
 import Dashboard from './pages/Dashboard'
 import ImportPage from './pages/ImportPage'
 import RelatoriosPage from './pages/RelatoriosPage'
@@ -10,6 +12,9 @@ export default function App() {
   const [pagina, setPagina] = useState('dashboard')
   const [checklistId, setChecklistId] = useState(null)
   const [refreshKey, setRefreshKey] = useState(0)
+  const [bannerDismissed, setBannerDismissed] = useState(false)
+
+  const { installPrompt, isInstalled, instalar, needRefresh, updateServiceWorker, setNeedRefresh } = usePWA()
 
   function navegar(p, id = null) {
     setPagina(p)
@@ -21,13 +26,31 @@ export default function App() {
     setPagina('dashboard')
   }
 
+  const mostrarBanner = !bannerDismissed && (needRefresh || (installPrompt && !isInstalled))
+
   return (
-    <Layout pagina={pagina} onNavegar={navegar}>
-      {pagina === 'dashboard' && <Dashboard key={refreshKey} onNavegar={navegar} />}
-      {pagina === 'importar'  && <ImportPage onImportado={onImportado} />}
-      {pagina === 'relatorios' && <RelatoriosPage key={refreshKey} />}
-      {pagina === 'checklists' && <ChecklistsPage key={refreshKey} onDetalhe={id => navegar('detalhe', id)} />}
-      {pagina === 'detalhe'   && <ChecklistDetail id={checklistId} onVoltar={() => navegar('checklists')} />}
-    </Layout>
+    <>
+      <Layout
+        pagina={pagina}
+        onNavegar={navegar}
+        onInstalar={installPrompt && !isInstalled ? instalar : null}
+        isInstalled={isInstalled}
+      >
+        {pagina === 'dashboard'  && <Dashboard key={refreshKey} onNavegar={navegar} />}
+        {pagina === 'importar'   && <ImportPage onImportado={onImportado} />}
+        {pagina === 'relatorios' && <RelatoriosPage key={refreshKey} />}
+        {pagina === 'checklists' && <ChecklistsPage key={refreshKey} onDetalhe={id => navegar('detalhe', id)} />}
+        {pagina === 'detalhe'    && <ChecklistDetail id={checklistId} onVoltar={() => navegar('checklists')} />}
+      </Layout>
+
+      {mostrarBanner && (
+        <InstallBanner
+          onInstalar={installPrompt && !isInstalled ? instalar : null}
+          needRefresh={needRefresh}
+          onAtualizar={() => updateServiceWorker(true)}
+          onDismiss={() => setBannerDismissed(true)}
+        />
+      )}
+    </>
   )
 }

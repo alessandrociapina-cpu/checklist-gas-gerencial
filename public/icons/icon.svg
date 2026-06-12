@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Fundo -->
+  <rect width="512" height="512" rx="96" fill="#1e3a5f"/>
+  <!-- Chama de gás estilizada -->
+  <path d="M256 80 C256 80 180 160 180 240 C180 300 210 340 256 360
+           C302 340 332 300 332 240 C332 160 256 80 256 80 Z"
+        fill="#3b82f6" opacity="0.9"/>
+  <path d="M256 160 C256 160 218 210 218 256 C218 292 234 316 256 328
+           C278 316 294 292 294 256 C294 210 256 160 256 160 Z"
+        fill="#60a5fa"/>
+  <path d="M256 230 C256 230 238 252 238 268 C238 280 246 288 256 292
+           C266 288 274 280 274 268 C274 252 256 230 256 230 Z"
+        fill="white"/>
+  <!-- Clip board base -->
+  <rect x="156" y="360" width="200" height="16" rx="8" fill="#60a5fa" opacity="0.7"/>
+  <rect x="176" y="384" width="160" height="10" rx="5" fill="#3b82f6" opacity="0.5"/>
+  <rect x="176" y="402" width="120" height="10" rx="5" fill="#3b82f6" opacity="0.5"/>
+</svg>

@@ -7,7 +7,7 @@ const NAV = [
   { id: 'checklists', label: 'Checklists',   icon: IconList },
 ]
 
-export default function Layout({ pagina, onNavegar, children }) {
+export default function Layout({ pagina, onNavegar, children, onInstalar, isInstalled }) {
   const [menuAberto, setMenuAberto] = useState(false)
 
   return (
@@ -23,7 +23,19 @@ export default function Layout({ pagina, onNavegar, children }) {
           </button>
           <span className="font-bold text-lg tracking-tight">Gás — Gerencial</span>
         </div>
-        <span className="text-xs text-blue-200 hidden sm:block">Sistema de Consolidação de Checklists</span>
+        <div className="flex items-center gap-3">
+          <span className="text-xs text-blue-200 hidden sm:block">Sistema de Consolidação de Checklists</span>
+          {onInstalar && !isInstalled && (
+            <button
+              onClick={onInstalar}
+              className="flex items-center gap-1.5 bg-white/10 hover:bg-white/20 text-white text-xs font-medium px-3 py-1.5 rounded-lg transition-colors"
+              title="Instalar como aplicativo"
+            >
+              <IconDownload className="w-4 h-4" />
+              <span className="hidden sm:inline">Instalar app</span>
+            </button>
+          )}
+        </div>
       </header>
 
       <div className="flex flex-1 overflow-hidden">
@@ -112,6 +124,15 @@ function IconList({ className }) {
     <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
         d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+    </svg>
+  )
+}
+
+function IconDownload({ className }) {
+  return (
+    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+        d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
     </svg>
   )
 }
