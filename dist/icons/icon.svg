@@ -1,18 +1,36 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <!-- Fundo -->
-  <rect width="512" height="512" rx="96" fill="#1e3a5f"/>
-  <!-- Chama de gás estilizada -->
-  <path d="M256 80 C256 80 180 160 180 240 C180 300 210 340 256 360
-           C302 340 332 300 332 240 C332 160 256 80 256 80 Z"
-        fill="#3b82f6" opacity="0.9"/>
-  <path d="M256 160 C256 160 218 210 218 256 C218 292 234 316 256 328
-           C278 316 294 292 294 256 C294 210 256 160 256 160 Z"
+  <!-- Fundo arredondado azul escuro -->
+  <rect width="512" height="512" rx="100" fill="#1e3a5f"/>
+
+  <!-- Chama principal -->
+  <path d="M256 96
+           C256 96 200 168 196 232
+           C192 276 210 304 230 320
+           C224 296 228 272 244 256
+           C244 256 240 308 268 332
+           C282 344 298 348 298 348
+           C316 328 328 300 328 268
+           C328 220 296 176 256 96Z"
         fill="#60a5fa"/>
-  <path d="M256 230 C256 230 238 252 238 268 C238 280 246 288 256 292
-           C266 288 274 280 274 268 C274 252 256 230 256 230 Z"
-        fill="white"/>
-  <!-- Clip board base -->
-  <rect x="156" y="360" width="200" height="16" rx="8" fill="#60a5fa" opacity="0.7"/>
-  <rect x="176" y="384" width="160" height="10" rx="5" fill="#3b82f6" opacity="0.5"/>
-  <rect x="176" y="402" width="120" height="10" rx="5" fill="#3b82f6" opacity="0.5"/>
+
+  <!-- Chama interna clara -->
+  <path d="M256 200
+           C256 200 232 232 232 260
+           C232 284 242 300 256 312
+           C270 300 280 284 280 260
+           C280 232 256 200 256 200Z"
+        fill="white" opacity="0.9"/>
+
+  <!-- Prancheta / clipboard -->
+  <rect x="148" y="352" width="216" height="148" rx="16" fill="white" opacity="0.12"/>
+  <rect x="148" y="352" width="216" height="148" rx="16" fill="none" stroke="white" stroke-width="8" opacity="0.5"/>
+
+  <!-- Linhas do relatório -->
+  <rect x="176" y="390" width="100" height="10" rx="5" fill="white" opacity="0.7"/>
+  <rect x="176" y="414" width="140" height="10" rx="5" fill="white" opacity="0.5"/>
+  <rect x="176" y="438" width="120" height="10" rx="5" fill="white" opacity="0.5"/>
+
+  <!-- Check mark -->
+  <circle cx="328" cy="390" r="22" fill="#22c55e"/>
+  <path d="M318 390 L326 398 L340 382" stroke="white" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
 </svg>

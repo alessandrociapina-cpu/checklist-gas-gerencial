@@ -23,7 +23,7 @@ export default function InstallBanner({ onInstalar, onAtualizar, needRefresh, on
     return (
       <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 w-[min(22rem,calc(100vw-2rem))]
                       bg-brand-900 text-white rounded-xl shadow-xl px-4 py-3 flex items-center gap-3">
-        <img src="/icons/icon-72.png" alt="" className="w-10 h-10 rounded-lg flex-shrink-0" />
+        <img src={`${import.meta.env.BASE_URL}icons/icon-96.png`} alt="" className="w-10 h-10 rounded-lg flex-shrink-0" />
         <div className="flex-1 min-w-0">
           <p className="text-sm font-semibold">Instalar aplicativo</p>
           <p className="text-xs text-blue-200">Use offline, acesso rápido na área de trabalho</p>
