@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { estatisticas } from '../lib/db'
-import { agruparPorFiscal, agruparPorMes } from '../lib/importService'
+import { agruparPorFiscal, agruparPorMes, calcularConformidade, pendenciasSemJustificativa } from '../lib/importService'
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
 } from 'recharts'
@@ -17,6 +17,12 @@ export default function Dashboard({ onNavegar, onInstalar, isInstalled }) {
   const porMes    = agruparPorMes(dados.checklists).slice(-6)
   const porFiscal = agruparPorFiscal(dados.checklists).slice(0, 5)
   const semDados  = dados.total === 0
+
+  const confFrentes  = calcularConformidade(dados.checklists)
+  const totalOk      = confFrentes.reduce((s, r) => s + r.ok, 0)
+  const totalIt      = confFrentes.reduce((s, r) => s + r.total, 0)
+  const confGeral    = totalIt > 0 ? Math.round((totalOk / totalIt) * 100) : 0
+  const semJust      = pendenciasSemJustificativa(dados.checklists)
 
   return (
     <div className="space-y-6 max-w-5xl">
@@ -40,12 +46,28 @@ export default function Dashboard({ onNavegar, onInstalar, isInstalled }) {
       )}
 
       {/* Cards de resumo */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
         <Card titulo="Checklists" valor={dados.total} cor="blue" />
         <Card titulo="Fiscais"    valor={dados.fiscais.length}    cor="green" />
         <Card titulo="Municípios" valor={dados.municipios.length} cor="purple" />
         <Card titulo="Este mês"   valor={contagemMesAtual(dados.checklists)} cor="orange" />
+        <Card
+          titulo="Conformidade"
+          valor={`${confGeral}%`}
+          cor={confGeral >= 80 ? 'green' : confGeral >= 50 ? 'orange' : 'red'}
+        />
       </div>
+
+      {/* Alerta de pendências sem justificativa */}
+      {semJust > 0 && (
+        <div className="flex items-center gap-3 bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-700">
+          <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+              d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+          </svg>
+          <span><strong>{semJust}</strong> pendência{semJust > 1 ? 's' : ''} sem justificativa registrada.</span>
+        </div>
+      )}
 
       {semDados ? (
         <div className="bg-white rounded-xl border border-dashed border-gray-300 p-12 text-center">
@@ -120,6 +142,7 @@ function Card({ titulo, valor, cor }) {
     green:  'bg-green-50 text-green-700 border-green-100',
     purple: 'bg-purple-50 text-purple-700 border-purple-100',
     orange: 'bg-orange-50 text-orange-700 border-orange-100',
+    red:    'bg-red-50 text-red-700 border-red-100',
   }
   return (
     <div className={`rounded-xl border p-4 ${cores[cor]}`}>

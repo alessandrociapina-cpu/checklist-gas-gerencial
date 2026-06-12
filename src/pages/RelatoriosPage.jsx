@@ -1,6 +1,10 @@
 import { useEffect, useState } from 'react'
 import { estatisticas } from '../lib/db'
-import { agruparPorFiscal, agruparPorMes, calcularConformidade } from '../lib/importService'
+import {
+  agruparPorFiscal, agruparPorMes, calcularConformidade,
+  conformidadePorFiscal, tendenciaConformidade, itensMaisReprovados,
+  pendenciasSemJustificativa, ultimaAtividadePorFiscal,
+} from '../lib/importService'
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
   LineChart, Line, Legend, Cell, RadarChart, PolarGrid, PolarAngleAxis,
@@ -24,10 +28,20 @@ export default function RelatoriosPage() {
     checklists = checklists.filter(c => c.data && new Date(c.data) >= limite)
   }
 
-  const porMes        = agruparPorMes(checklists)
-  const porFiscal     = agruparPorFiscal(checklists)
-  const conformidade  = calcularConformidade(checklists)
-  const porMunicipio  = agruparPorMunicipio(checklists)
+  const porMes           = agruparPorMes(checklists)
+  const porFiscal        = agruparPorFiscal(checklists)
+  const conformidade     = calcularConformidade(checklists)
+  const porMunicipio     = agruparPorMunicipio(checklists)
+  const confFiscal       = conformidadePorFiscal(checklists)
+  const tendencia        = tendenciaConformidade(checklists)
+  const topReprovados    = itensMaisReprovados(checklists, 10)
+  const semJustificativa = pendenciasSemJustificativa(checklists)
+  const atividadeFiscal  = ultimaAtividadePorFiscal(checklists)
+
+  // conformidade geral
+  const totalOk  = conformidade.reduce((s, r) => s + r.ok, 0)
+  const totalIt  = conformidade.reduce((s, r) => s + r.total, 0)
+  const confGeral = totalIt > 0 ? Math.round((totalOk / totalIt) * 100) : 0
 
   const semDados = dados.total === 0
 
@@ -54,6 +68,44 @@ export default function RelatoriosPage() {
         </div>
       ) : (
         <>
+          {/* KPI cards */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <KpiCard
+              label="Conformidade geral"
+              valor={`${confGeral}%`}
+              cor={confGeral >= 80 ? 'verde' : confGeral >= 50 ? 'laranja' : 'vermelho'}
+            />
+            <KpiCard label="Checklists" valor={checklists.length} cor="azul" />
+            <KpiCard
+              label="Pendências s/ justificativa"
+              valor={semJustificativa}
+              cor={semJustificativa === 0 ? 'verde' : 'vermelho'}
+            />
+            <KpiCard label="Fiscais" valor={confFiscal.length} cor="neutro" />
+          </div>
+
+          {/* Tendência de conformidade */}
+          {tendencia.length > 1 && (
+            <Painel titulo="Tendência de conformidade por mês (%)">
+              <ResponsiveContainer width="100%" height={240}>
+                <LineChart data={tendencia} margin={{ top: 4, right: 16, left: -20, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                  <XAxis dataKey="mes" tick={{ fontSize: 11 }} />
+                  <YAxis domain={[0, 100]} tickFormatter={v => `${v}%`} tick={{ fontSize: 11 }} />
+                  <Tooltip formatter={v => `${v}%`} />
+                  <Line
+                    type="monotone"
+                    dataKey="conformidade"
+                    stroke="#10b981"
+                    strokeWidth={2.5}
+                    dot={{ r: 4, fill: '#10b981' }}
+                    name="Conformidade %"
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </Painel>
+          )}
+
           {/* Evolução temporal */}
           <Painel titulo="Evolução de checklists por mês">
             {porMes.length > 1 ? (
@@ -74,13 +126,15 @@ export default function RelatoriosPage() {
                 </LineChart>
               </ResponsiveContainer>
             ) : (
-              <BarChart data={porMes} margin={{ top: 4, right: 8, left: -20, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                <XAxis dataKey="mes" tick={{ fontSize: 11 }} />
-                <YAxis allowDecimals={false} tick={{ fontSize: 11 }} />
-                <Tooltip />
-                <Bar dataKey="quantidade" fill="#3b82f6" radius={[4, 4, 0, 0]} name="Checklists" />
-              </BarChart>
+              <ResponsiveContainer width="100%" height={240}>
+                <BarChart data={porMes} margin={{ top: 4, right: 8, left: -20, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                  <XAxis dataKey="mes" tick={{ fontSize: 11 }} />
+                  <YAxis allowDecimals={false} tick={{ fontSize: 11 }} />
+                  <Tooltip />
+                  <Bar dataKey="quantidade" fill="#3b82f6" radius={[4, 4, 0, 0]} name="Checklists" />
+                </BarChart>
+              </ResponsiveContainer>
             )}
           </Painel>
 
@@ -106,11 +160,11 @@ export default function RelatoriosPage() {
               )}
             </Painel>
 
-            {/* Conformidade por frente */}
+            {/* Conformidade por frente — radar */}
             <Painel titulo="Conformidade por frente de trabalho (%)">
               {conformidade.some(c => c.total > 0) ? (
                 <ResponsiveContainer width="100%" height={240}>
-                  <RadarChart data={conformidade} margin={{ top: 8, right: 24, bottom: 8, left: 24 }}>
+                  <RadarChart data={conformidade.map(c => ({ ...c, frente: c.labelCurto }))} margin={{ top: 8, right: 24, bottom: 8, left: 24 }}>
                     <PolarGrid />
                     <PolarAngleAxis dataKey="frente" tick={{ fontSize: 12 }} />
                     <PolarRadiusAxis angle={30} domain={[0, 100]} tick={{ fontSize: 10 }} />
@@ -163,6 +217,89 @@ export default function RelatoriosPage() {
             </div>
           </Painel>
 
+          {/* Conformidade por fiscal */}
+          {confFiscal.length > 0 && (
+            <Painel titulo="Conformidade por fiscal">
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-gray-200 text-left text-gray-500">
+                      <th className="pb-2 font-medium">Fiscal</th>
+                      <th className="pb-2 font-medium text-right">Checklists</th>
+                      <th className="pb-2 font-medium text-right">Itens OK</th>
+                      <th className="pb-2 font-medium text-right">Total itens</th>
+                      <th className="pb-2 font-medium text-right w-40">Conformidade</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {confFiscal.map(row => (
+                      <tr key={row.fiscal}>
+                        <td className="py-2 font-medium text-gray-700">{row.fiscal}</td>
+                        <td className="py-2 text-right text-gray-500">{row.qtd}</td>
+                        <td className="py-2 text-right text-green-600 font-medium">{row.ok}</td>
+                        <td className="py-2 text-right text-gray-500">{row.total}</td>
+                        <td className="py-2 text-right">
+                          <div className="flex items-center justify-end gap-2">
+                            <div className="w-20 bg-gray-100 rounded-full h-2 overflow-hidden">
+                              <div
+                                className="h-2 rounded-full"
+                                style={{
+                                  width: `${row.pct}%`,
+                                  background: row.pct >= 80 ? '#10b981' : row.pct >= 50 ? '#f59e0b' : '#ef4444',
+                                }}
+                              />
+                            </div>
+                            <span className={`text-xs font-semibold w-10 text-right
+                              ${row.pct >= 80 ? 'text-green-600' : row.pct >= 50 ? 'text-yellow-600' : 'text-red-600'}`}>
+                              {row.pct}%
+                            </span>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </Painel>
+          )}
+
+          {/* Top itens mais reprovados */}
+          {topReprovados.length > 0 && (
+            <Painel titulo="Top itens mais reprovados">
+              <ResponsiveContainer width="100%" height={Math.max(200, topReprovados.length * 36)}>
+                <BarChart
+                  data={topReprovados}
+                  layout="vertical"
+                  margin={{ top: 4, right: 60, left: 8, bottom: 0 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" horizontal={false} />
+                  <XAxis type="number" allowDecimals={false} tick={{ fontSize: 11 }} />
+                  <YAxis
+                    dataKey="titulo"
+                    type="category"
+                    width={200}
+                    tick={{ fontSize: 11 }}
+                    tickFormatter={v => v.length > 32 ? `${v.substring(0, 32)}…` : v}
+                  />
+                  <Tooltip
+                    formatter={(value, name, props) => [
+                      `${value} reprovações (${props.payload.pct}%)`,
+                      'Reprovações',
+                    ]}
+                  />
+                  <Bar dataKey="reprovacoes" radius={[0, 4, 4, 0]} name="Reprovações">
+                    {topReprovados.map((item, i) => (
+                      <Cell
+                        key={i}
+                        fill={item.pct >= 50 ? '#ef4444' : item.pct >= 25 ? '#f59e0b' : '#3b82f6'}
+                      />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </Painel>
+          )}
+
           {/* Atividade por município */}
           {porMunicipio.length > 0 && (
             <Painel titulo="Atividade por município">
@@ -175,6 +312,50 @@ export default function RelatoriosPage() {
                   <Bar dataKey="quantidade" fill="#8b5cf6" radius={[4, 4, 0, 0]} name="Checklists" />
                 </BarChart>
               </ResponsiveContainer>
+            </Painel>
+          )}
+
+          {/* Última atividade por fiscal */}
+          {atividadeFiscal.length > 0 && (
+            <Painel titulo="Última atividade por fiscal">
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-gray-200 text-left text-gray-500">
+                      <th className="pb-2 font-medium">Fiscal</th>
+                      <th className="pb-2 font-medium text-right">Checklists</th>
+                      <th className="pb-2 font-medium text-right">Última submissão</th>
+                      <th className="pb-2 font-medium text-right">Dias atrás</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {atividadeFiscal.map(row => {
+                      const diasAtras = row.ultimaData
+                        ? Math.floor((Date.now() - new Date(row.ultimaData)) / 86_400_000)
+                        : null
+                      return (
+                        <tr key={row.fiscal}>
+                          <td className="py-2 font-medium text-gray-700">{row.fiscal}</td>
+                          <td className="py-2 text-right text-gray-500">{row.qtd}</td>
+                          <td className="py-2 text-right text-gray-600">
+                            {row.ultimaData ? fmtData(row.ultimaData) : '—'}
+                          </td>
+                          <td className="py-2 text-right">
+                            {diasAtras !== null ? (
+                              <span className={`text-xs font-semibold px-2 py-0.5 rounded-full
+                                ${diasAtras <= 7  ? 'bg-green-100 text-green-700'
+                                  : diasAtras <= 30 ? 'bg-yellow-100 text-yellow-700'
+                                  : 'bg-red-100 text-red-700'}`}>
+                                {diasAtras}d
+                              </span>
+                            ) : '—'}
+                          </td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </div>
             </Painel>
           )}
 
@@ -221,6 +402,11 @@ export default function RelatoriosPage() {
   )
 }
 
+function fmtData(d) {
+  if (!d) return '—'
+  try { const [a, m, dd] = d.split('-'); return `${dd}/${m}/${a}` } catch { return d }
+}
+
 function agruparPorMunicipio(checklists) {
   const map = {}
   for (const c of checklists) {
@@ -231,6 +417,22 @@ function agruparPorMunicipio(checklists) {
     .sort(([, a], [, b]) => b - a)
     .slice(0, 8)
     .map(([municipio, quantidade]) => ({ municipio, quantidade }))
+}
+
+function KpiCard({ label, valor, cor }) {
+  const esquemas = {
+    verde:    'bg-green-50 border-green-100 text-green-700',
+    laranja:  'bg-orange-50 border-orange-100 text-orange-700',
+    vermelho: 'bg-red-50 border-red-100 text-red-700',
+    azul:     'bg-blue-50 border-blue-100 text-blue-700',
+    neutro:   'bg-gray-50 border-gray-200 text-gray-700',
+  }
+  return (
+    <div className={`rounded-xl border p-4 ${esquemas[cor] ?? esquemas.neutro}`}>
+      <p className="text-xs font-medium uppercase tracking-wide opacity-70">{label}</p>
+      <p className="text-3xl font-bold mt-1">{valor}</p>
+    </div>
+  )
 }
 
 function Painel({ titulo, children }) {
