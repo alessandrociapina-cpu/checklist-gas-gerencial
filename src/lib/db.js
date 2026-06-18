@@ -33,8 +33,30 @@ export async function importarBackup(jsonData) {
       }
       await db.checklists.put(flat)
 
-      if (fotos.length) {
-        await db.fotos.bulkPut(fotos)
+      // Normaliza fotos do array raiz garantindo checklistId
+      const todasFotos = fotos.map(f => ({
+        ...f,
+        checklistId: f.checklistId || checklist.id,
+      }))
+
+      // Extrai fotos embutidas nos itens das frentes (item.fotos = [...])
+      for (const [frenteKey, itens] of Object.entries(checklist.frentes ?? {})) {
+        if (!Array.isArray(itens)) continue
+        for (let idx = 0; idx < itens.length; idx++) {
+          const item = itens[idx]
+          for (let fi = 0; fi < (item.fotos ?? []).length; fi++) {
+            const f = item.fotos[fi]
+            const fotoObj = typeof f === 'string' ? { dataUrl: f } : { ...f }
+            if (!fotoObj.id) fotoObj.id = `${checklist.id}_emb_${frenteKey}_${idx}_${fi}`
+            fotoObj.checklistId = checklist.id
+            fotoObj.itemKey = fotoObj.itemKey || `${frenteKey}_${idx}`
+            todasFotos.push(fotoObj)
+          }
+        }
+      }
+
+      if (todasFotos.length) {
+        await db.fotos.bulkPut(todasFotos)
       }
 
       existing ? atualizados++ : novos++
