@@ -58,9 +58,10 @@ export function fmtData(d) {
   catch { return d }
 }
 
-// Busca fotos de um item. O itemKey do app pode ser "f1_0", "f1-0", etc.
+// Busca fotos de um item. O itemKey do app usa "f1:0", "f1_0", "f1-0", etc.
 export function fotosDoItem(fotos, frenteKey, idx) {
   return fotos.filter(f =>
+    f.itemKey === `${frenteKey}:${idx}` ||
     f.itemKey === `${frenteKey}_${idx}` ||
     f.itemKey === `${frenteKey}-${idx}` ||
     f.itemKey === `${frenteKey}.${idx}` ||
