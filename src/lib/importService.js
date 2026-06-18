@@ -19,7 +19,19 @@ export async function processarArquivos(arquivos) {
         continue
       }
 
-      const { novos, atualizados, total } = await importarBackup(json)
+      // Log da estrutura do JSON para diagnóstico
+      const primeiraEntrada = json.dados?.[0]
+      console.log('[import] estrutura detectada:', {
+        totalEntradas: json.dados?.length,
+        temFotosNaEntrada: Array.isArray(primeiraEntrada?.fotos),
+        qtdFotosNaEntrada: primeiraEntrada?.fotos?.length ?? 0,
+        temFotosNoChecklist: Array.isArray(primeiraEntrada?.checklist?.fotos),
+        qtdFotosNoChecklist: primeiraEntrada?.checklist?.fotos?.length ?? 0,
+        frentes: Object.keys(primeiraEntrada?.checklist?.frentes ?? {}),
+        itemFrenteExemplo: primeiraEntrada?.checklist?.frentes?.f1?.[0],
+      })
+
+      const { novos, atualizados, total, fotos: qtdFotos } = await importarBackup(json)
 
       await db.importacoes.add({
         arquivo: arquivo.name,
@@ -27,7 +39,7 @@ export async function processarArquivos(arquivos) {
         qtd: novos + atualizados,
       })
 
-      resultados.push({ arquivo: arquivo.name, novos, atualizados, total, ok: true })
+      resultados.push({ arquivo: arquivo.name, novos, atualizados, total, fotos: qtdFotos, ok: true })
     } catch (e) {
       resultados.push({ arquivo: arquivo.name, erro: e.message })
     }

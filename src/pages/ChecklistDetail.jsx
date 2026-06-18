@@ -8,8 +8,14 @@ export default function ChecklistDetail({ id, onVoltar, autoPrint = false }) {
   const [fotos, setFotos] = useState([])
 
   useEffect(() => {
-    db.checklists.get(id).then(setChecklist)
-    db.fotos.where('checklistId').equals(id).toArray().then(setFotos)
+    db.checklists.get(id).then(c => {
+      console.log('[detail] checklist:', c?.id, '| frentes:', Object.keys(c?.frentes ?? {}))
+      setChecklist(c)
+    })
+    db.fotos.where('checklistId').equals(id).toArray().then(fts => {
+      console.log(`[detail] fotos no banco para "${id}": ${fts.length}`, fts.map(f => f.itemKey ?? '(geral)'))
+      setFotos(fts)
+    })
   }, [id])
 
   useEffect(() => {

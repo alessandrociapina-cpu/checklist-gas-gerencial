@@ -97,6 +97,7 @@ export default function ImportPage({ onImportado }) {
                   {r.ok ? (
                     <p className="text-xs text-gray-500 mt-0.5">
                       {r.novos} novo{r.novos !== 1 ? 's' : ''} · {r.atualizados} atualizado{r.atualizados !== 1 ? 's' : ''} · {r.total} total
+                      {r.fotos > 0 && ` · ${r.fotos} foto${r.fotos !== 1 ? 's' : ''}`}
                     </p>
                   ) : (
                     <p className="text-xs text-red-500 mt-0.5">{r.erro}</p>
