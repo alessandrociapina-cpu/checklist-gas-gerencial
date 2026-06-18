@@ -6,6 +6,7 @@ import { DEFINICOES_FRENTES, LABELS_GERAL, fmtData, fotosDoItem } from '../lib/r
 export default function ChecklistDetail({ id, onVoltar, autoPrint = false }) {
   const [checklist, setChecklist] = useState(null)
   const [fotos, setFotos] = useState([])
+  const [lightbox, setLightbox] = useState(null) // dataUrl da foto ampliada
 
   useEffect(() => {
     db.checklists.get(id).then(c => {
@@ -41,6 +42,29 @@ export default function ChecklistDetail({ id, onVoltar, autoPrint = false }) {
 
   return (
     <div style={{ fontFamily: "system-ui, -apple-system, 'Segoe UI', sans-serif" }}>
+
+      {/* ── Lightbox ───────────────────────────────────────── */}
+      {lightbox && (
+        <div
+          className="no-print fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4"
+          onClick={() => setLightbox(null)}
+        >
+          <button
+            onClick={() => setLightbox(null)}
+            className="absolute top-4 right-4 text-white/70 hover:text-white bg-white/10 hover:bg-white/20 rounded-full p-2 transition-colors"
+          >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+          <img
+            src={lightbox}
+            alt="Foto ampliada"
+            style={{ maxWidth: '100%', maxHeight: '90vh', borderRadius: 8, objectFit: 'contain' }}
+            onClick={e => e.stopPropagation()}
+          />
+        </div>
+      )}
 
       {/* ── Toolbar (só em tela) ───────────────────────────── */}
       <div className="no-print flex items-center gap-3 mb-4">
@@ -174,7 +198,13 @@ export default function ChecklistDetail({ id, onVoltar, autoPrint = false }) {
                               <div className="rel-fotos-wrap">
                                 {fts.map((f, fi) => (
                                   <div key={fi} className="rel-foto-item">
-                                    <img src={f.dataUrl} alt={`Foto ${fi + 1}`} className="rel-foto-img" />
+                                    <img
+                                      src={f.dataUrl}
+                                      alt={`Foto ${fi + 1}`}
+                                      className="rel-foto-img"
+                                      onClick={() => setLightbox(f.dataUrl)}
+                                      title="Clique para ampliar"
+                                    />
                                     <span className="rel-foto-rotulo">Foto {fi + 1}</span>
                                   </div>
                                 ))}
@@ -200,7 +230,13 @@ export default function ChecklistDetail({ id, onVoltar, autoPrint = false }) {
               <div className="rel-fotos-wrap">
                 {fotasGerais.map((f, i) => (
                   <div key={i} className="rel-foto-item">
-                    <img src={f.dataUrl} alt={`Foto ${i + 1}`} className="rel-foto-img" />
+                    <img
+                      src={f.dataUrl}
+                      alt={`Foto ${i + 1}`}
+                      className="rel-foto-img"
+                      onClick={() => setLightbox(f.dataUrl)}
+                      title="Clique para ampliar"
+                    />
                     <span className="rel-foto-rotulo">Foto {i + 1}</span>
                   </div>
                 ))}

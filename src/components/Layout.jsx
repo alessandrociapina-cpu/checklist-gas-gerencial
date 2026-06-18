@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { VERSAO, CHANGELOG } from '../lib/version'
 
 const NAV = [
   { id: 'dashboard',  label: 'Dashboard',   icon: IconDash },
@@ -9,6 +10,7 @@ const NAV = [
 
 export default function Layout({ pagina, onNavegar, children, onInstalar, isInstalled }) {
   const [menuAberto, setMenuAberto] = useState(false)
+  const [changelogAberto, setChangelogAberto] = useState(false)
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -35,6 +37,14 @@ export default function Layout({ pagina, onNavegar, children, onInstalar, isInst
               <span className="hidden sm:inline">Instalar app</span>
             </button>
           )}
+          {/* Badge de versão */}
+          <button
+            onClick={() => setChangelogAberto(true)}
+            className="flex items-center gap-1 bg-white/10 hover:bg-white/20 text-blue-200 hover:text-white text-xs font-mono px-2.5 py-1 rounded-lg transition-colors"
+            title="Ver histórico de versões"
+          >
+            v{VERSAO}
+          </button>
         </div>
       </header>
 
@@ -63,6 +73,16 @@ export default function Layout({ pagina, onNavegar, children, onInstalar, isInst
               {label}
             </button>
           ))}
+
+          {/* Versão no rodapé da sidebar */}
+          <div className="mt-auto px-4 pt-4 border-t border-white/10">
+            <button
+              onClick={() => setChangelogAberto(true)}
+              className="text-xs text-blue-300 hover:text-white transition-colors"
+            >
+              Versão {VERSAO}
+            </button>
+          </div>
         </nav>
 
         {/* Overlay mobile */}
@@ -78,8 +98,77 @@ export default function Layout({ pagina, onNavegar, children, onInstalar, isInst
           {children}
         </main>
       </div>
+
+      {/* Modal de changelog */}
+      {changelogAberto && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60"
+          onClick={() => setChangelogAberto(false)}
+        >
+          <div
+            className="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[80vh] flex flex-col overflow-hidden"
+            onClick={e => e.stopPropagation()}
+          >
+            {/* Cabeçalho */}
+            <div className="bg-brand-900 text-white px-5 py-4 flex items-center justify-between flex-shrink-0">
+              <div>
+                <h2 className="font-bold text-base">Histórico de Versões</h2>
+                <p className="text-xs text-blue-200 mt-0.5">Gás — Gerencial</p>
+              </div>
+              <button
+                onClick={() => setChangelogAberto(false)}
+                className="p-1.5 rounded-lg hover:bg-white/20 transition-colors"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Lista de versões */}
+            <div className="overflow-y-auto flex-1 divide-y divide-gray-100">
+              {CHANGELOG.map((entry, i) => (
+                <div key={entry.versao} className="px-5 py-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className={`font-bold text-sm px-2 py-0.5 rounded-full
+                      ${i === 0 ? 'bg-brand-900 text-white' : 'bg-gray-100 text-gray-600'}`}>
+                      v{entry.versao}
+                    </span>
+                    <span className="text-xs text-gray-400">{fmtData(entry.data)}</span>
+                    {i === 0 && (
+                      <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-medium">
+                        atual
+                      </span>
+                    )}
+                  </div>
+                  <ul className="space-y-1">
+                    {entry.mudancas.map((m, j) => (
+                      <li key={j} className="flex items-start gap-2 text-sm text-gray-600">
+                        <span className="text-brand-500 mt-0.5 flex-shrink-0">•</span>
+                        {m}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
+
+            {/* Rodapé */}
+            <div className="px-5 py-3 bg-gray-50 border-t border-gray-100 flex-shrink-0">
+              <p className="text-xs text-gray-400 text-center">
+                Versão atual: <strong className="text-gray-600">v{VERSAO}</strong>
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
+}
+
+function fmtData(d) {
+  if (!d) return ''
+  try { const [a, m, dd] = d.split('-'); return `${dd}/${m}/${a}` } catch { return d }
 }
 
 // ─── Ícones inline (SVG) ───────────────────────────────────────────────────────

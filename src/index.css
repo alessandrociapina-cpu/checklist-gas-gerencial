@@ -155,12 +155,15 @@
   gap: 4px;
 }
 .rel-foto-img {
-  width: 140px;
-  height: 105px;
+  width: 280px;
+  height: 210px;
   object-fit: cover;
   border-radius: 6px;
   border: 1px solid #d8dee6;
+  cursor: pointer;
+  transition: opacity .15s;
 }
+.rel-foto-img:hover { opacity: .85; }
 .rel-foto-rotulo {
   font-size: 0.7rem;
   color: #6b7280;
