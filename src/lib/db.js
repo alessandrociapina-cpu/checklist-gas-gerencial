@@ -24,8 +24,8 @@ export async function importarBackup(jsonData) {
       !existing ||
       new Date(checklist.atualizadoEm) > new Date(existing.atualizadoEm)
 
+    // Atualiza checklist só se for mais recente
     if (maisRecente) {
-      // Salva checklist sem o campo fotos embutido (evita duplicação de base64 no store)
       const { fotos: _fotosEmbutidas, ...checklistSemFotos } = checklist
       const flat = {
         ...checklistSemFotos,
@@ -34,47 +34,56 @@ export async function importarBackup(jsonData) {
         data: checklist.geral?.data ?? '',
       }
       await db.checklists.put(flat)
+      existing ? atualizados++ : novos++
+    }
 
-      const todasFotos = []
+    // Sempre processa fotos (independente de maisRecente)
+    const todasFotos = []
 
-      // 1. Array de fotos no nível da entrada (formato padrão)
-      for (const f of fotosEntrada) {
-        todasFotos.push({ ...f, checklistId: f.checklistId || checklist.id })
-      }
+    // 1. Array de fotos no nível da entrada (formato padrão)
+    for (let fi = 0; fi < fotosEntrada.length; fi++) {
+      const f = fotosEntrada[fi]
+      todasFotos.push({
+        ...f,
+        id: f.id || `${checklist.id}_foto_${fi}`,
+        checklistId: f.checklistId || checklist.id,
+      })
+    }
 
-      // 2. Array de fotos dentro do objeto checklist (checklist.fotos)
-      for (let fi = 0; fi < (_fotosEmbutidas ?? []).length; fi++) {
-        const f = _fotosEmbutidas[fi]
-        const fotoObj = typeof f === 'string' ? { dataUrl: f } : { ...f }
-        if (!fotoObj.id) fotoObj.id = `${checklist.id}_cl_${fi}`
-        fotoObj.checklistId = checklist.id
-        todasFotos.push(fotoObj)
-      }
+    // 2. Array de fotos dentro do objeto checklist (checklist.fotos)
+    for (let fi = 0; fi < (checklist.fotos ?? []).length; fi++) {
+      const f = checklist.fotos[fi]
+      const fotoObj = typeof f === 'string' ? { dataUrl: f } : { ...f }
+      todasFotos.push({
+        ...fotoObj,
+        id: fotoObj.id || `${checklist.id}_cl_${fi}`,
+        checklistId: checklist.id,
+      })
+    }
 
-      // 3. Fotos embutidas dentro de cada item da frente (item.fotos = [...])
-      for (const [frenteKey, itens] of Object.entries(checklist.frentes ?? {})) {
-        if (!Array.isArray(itens)) continue
-        for (let idx = 0; idx < itens.length; idx++) {
-          const item = itens[idx]
-          for (let fi = 0; fi < (item.fotos ?? []).length; fi++) {
-            const f = item.fotos[fi]
-            const fotoObj = typeof f === 'string' ? { dataUrl: f } : { ...f }
-            if (!fotoObj.id) fotoObj.id = `${checklist.id}_emb_${frenteKey}_${idx}_${fi}`
-            fotoObj.checklistId = checklist.id
-            fotoObj.itemKey = fotoObj.itemKey || `${frenteKey}_${idx}`
-            todasFotos.push(fotoObj)
-          }
+    // 3. Fotos embutidas dentro de cada item da frente (item.fotos = [...])
+    for (const [frenteKey, itens] of Object.entries(checklist.frentes ?? {})) {
+      if (!Array.isArray(itens)) continue
+      for (let idx = 0; idx < itens.length; idx++) {
+        const item = itens[idx]
+        for (let fi = 0; fi < (item.fotos ?? []).length; fi++) {
+          const f = item.fotos[fi]
+          const fotoObj = typeof f === 'string' ? { dataUrl: f } : { ...f }
+          todasFotos.push({
+            ...fotoObj,
+            id: fotoObj.id || `${checklist.id}_emb_${frenteKey}_${idx}_${fi}`,
+            checklistId: checklist.id,
+            itemKey: fotoObj.itemKey || `${frenteKey}_${idx}`,
+          })
         }
       }
+    }
 
-      console.log(`[import] ${checklist.id}: ${todasFotos.length} fotos encontradas`)
-      if (todasFotos.length) {
-        console.log('[import] itemKeys:', todasFotos.map(f => `${f.itemKey ?? '(geral)'}(id=${f.id})`))
-        await db.fotos.bulkPut(todasFotos)
-        totalFotos += todasFotos.length
-      }
-
-      existing ? atualizados++ : novos++
+    console.log(`[import] ${checklist.id}: ${todasFotos.length} fotos | maisRecente=${maisRecente}`)
+    if (todasFotos.length) {
+      console.log('[import] itemKeys:', todasFotos.map(f => `${f.itemKey ?? '(geral)'}(id=${f.id})`))
+      await db.fotos.bulkPut(todasFotos)
+      totalFotos += todasFotos.length
     }
   }
 
